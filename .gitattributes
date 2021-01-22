@@ -1,2 +1,2 @@
-# Example of a `.gitattributes` file which reclassifies `.ipynb` files as Python:
-*.ipynb linguist-language=Python
+# Example of a `.gitattributes` file which removes `.ipynb` files from Linguist detection:
+*.ipynb linguist-detectable=false
