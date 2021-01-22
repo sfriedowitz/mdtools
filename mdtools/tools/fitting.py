@@ -4,10 +4,17 @@ from scipy.optimize import curve_fit
 #========================================================================================#
 
 class FittingFunction:
-    def __init__(self, nper, nterms):
-        self.nper = nper
-        self.nterms = nterms
-        self.nparams = nper*nterms
+    """
+    Base class for performing and storing fitting results
+    for an arbitrary function.
+
+    Parameters
+    ----------
+    nparams : int
+        Number of fitting parameters required for the model
+    """
+    def __init__(self, nparams):
+        self.nparams = nparams
         
         self.xlim = ()
         self.is_fit = False
@@ -25,6 +32,12 @@ class FittingFunction:
         return self._func(x, self.params)
     
     def fit(self, x, fx, p0, nfit = 500):
+        """ 
+        Fit the model to the provided data,
+        using only the first ``nfit`` data points.
+        Initial parameters ``p0`` must be of the same dimension
+        as the required number of model parameters.
+        """
         assert len(p0) == self.nparams, "Invalid number of initial parameters. Requires: {:d}".format(self.nparams)
         popt, pcov = curve_fit(lambda v, *p: self._func(v, p), x[:nfit], fx[:nfit], p0 = p0, bounds = (self.lb, self.ub))
         # Update fields
@@ -36,8 +49,19 @@ class FittingFunction:
 #========================================================================================#
     
 class MultiExponential(FittingFunction):
+    """
+    Fiting function for a multi-exponential function of the form
+    :math:`f(x) = \sum_i A_i e^{-x / \tau_i}`
+
+    Parameters
+    ----------
+    nterms : int
+        Number of additive terms to include in the model
+    """
     def __init__(self, nterms):
-        super(MultiExponential, self).__init__(2, nterms)
+        self.nper = 2
+        self.nterms = nterms
+        super().__init__(self.nper*self.nterms)
         
         # Create bounds for fitting
         self.lb = np.zeros(self.nparams)
@@ -59,8 +83,19 @@ class MultiExponential(FittingFunction):
         return fx
 
 class MultiKWW(FittingFunction):
+    """
+    Fiting function for a multi-stretched exponential function of the form
+    :math:`f(x) = \sum_i A_i ( e^{-x / \tau_i} )^{\beta_i}`
+
+    Parameters
+    ----------
+    nterms : int
+        Number of additive terms to include in the model
+    """
     def __init__(self, nterms):
-        super(MultiKWW, self).__init__(3, nterms)
+        self.nper = 3
+        self.nterms = nterms
+        super().__init__(self.nper*self.nterms)
         
         # Create bounds for fitting
         self.lb = np.zeros(self.nparams)
@@ -83,8 +118,19 @@ class MultiKWW(FittingFunction):
         return fx
 
 class MultiDampedOscillator(FittingFunction):
+    """
+    Fiting function for a multi-damped oscillator function of the form
+    :math:`f(x) = \sum_i A_i \cos(\omega_i x + \delta_i) e^{-x / \tau_i}`
+
+    Parameters
+    ----------
+    nterms : int
+        Number of additive terms to include in the model
+    """
     def __init__(self, nterms):
-        super(MultiDampedOscillator, self).__init__(4, nterms)
+        self.nper = 4
+        self.nterms = nterms
+        super().__init__(self.nper*self.nterms)
         
         # Create bounds for fitting
         self.lb = np.concatenate([

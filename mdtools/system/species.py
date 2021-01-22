@@ -16,11 +16,11 @@ class Species():
     Parameters
     ----------
     id : integer
-        Unique ID for this species.
+        Unique ID for this species
     monomers : array-like of MonomerType
-        All MonomerType objects present in species.
-    natom : integer
-        Number of atoms in a given unit of this species.
+        All MonomerType objects present in species
+    natoms : integer
+        Number of atoms in a given unit of this species
     """
     def __init__(self, id, monomers, natoms):
         self.id = id

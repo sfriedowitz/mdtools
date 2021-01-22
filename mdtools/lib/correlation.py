@@ -12,13 +12,6 @@ from .utils import nearest_power_two
 def correlation_1d(data1, data2 = None):
     """
     Compute the correlation of two scalar time series.
-    Args:
-        data1 (array-like): Input time series of shape (N,)
-        data2 (array-like): Input time series of shape (N,). Defaults to copy of data1.
-    Returns:
-        : ndarray of shape (N,) with the correlation for
-        "data1*data2[tau]" where tau is the lag in units of the timestep in the
-        input data. The correlation is given from time 0 to time N.
     """
     data1 = np.asarray(data1)
     if data2 is None:
@@ -40,22 +33,11 @@ def correlation_1d(data1, data2 = None):
 
     return result[:N].real / (N - np.arange(N))
 
-    #positive_time = result[:N].real/(N-np.arange(N))
-    #negative_time = result[-N+1:][::-1].real/(N-1-np.arange(N-1))
-    #return np.concatenate((negative_time[::-1], positive_time))
-
 def correlation(data1, data2 = None):
-    """Correlation between the input data using the fft algorithm.
-    For D-dimensional time series, a sum is performed on the last dimension.
-    Args:
-        data1 (array-like): The first input signal, of shape (N,) or (N,D).
-        data2 (array-like): The second input signal, of equal shape as data1. Defaults to a copy of data1.
-    Returns:
-        : ndarray of shape (N,) with the correlation for
-        "data1*data2[tau]" where tau is the lag in units of the timestep in the
-        input data. The correlation is given from time 0 to time N.
     """
-
+    Correlation between the input data using the fft algorithm.
+    For D-dimensional time series, a sum is performed on the last dimension.
+    """
     data1 = np.asarray(data1)
     if data2 is None:
         data2 = data1
@@ -75,17 +57,13 @@ def correlation(data1, data2 = None):
 #==============================================================================#
 
 def msd(pos):
-    """Mean-squared displacement (MSD) of the input trajectory using the fft algorithm.
-    Computes the MSD for all possible time deltas in the trajectory. The numerical results for large
-    time deltas contain fewer samples than for small time times and are less accurate. This is
-    intrinsic to the computation and not a limitation of the algorithm.
-    Args:
-        pos (array-like): The input trajectory, of shape (N,) or (N,D).
-    Returns:
-        : ndarray of shape (N,) with the MSD for successive linearly spaced time
-        delays.
     """
-
+    Mean-squared displacement (MSD) of the input trajectory using the fft algorithm.
+    Computes the MSD for all possible time deltas in the trajectory. 
+    The numerical results for large time deltas 
+    contain fewer samples than for small time times and are less accurate. 
+    This is intrinsic to the computation and not a limitation of the algorithm.
+    """
     pos = np.asarray(pos)
     if pos.shape[0] == 0:
         return np.array([], dtype=pos.dtype)
@@ -110,14 +88,9 @@ def msd(pos):
     return MSD
 
 def cross_displacement(pos):
-    """Cross displacement of the components of the input trajectory.
-    Args:
-        pos (array-like): The input trajectory, of shape (N, D).
-    Returns:
-        : list of lists of times series, where the fist two indices [i][j]
-        denote the coordinates for the cross displacement: "(Delta pos[:,i]) (Delta pos[:,j])".
     """
-
+    Cross displacement of the components of the input trajectory.
+    """
     pos = np.asarray(pos)
     if pos.ndim != 2:
         raise ValueError("Incorrect input data for cross_displacement")

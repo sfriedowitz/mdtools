@@ -18,13 +18,13 @@ class MolecularSystem:
     """A holder class containing all information for building a molecular system.
     Contains a simulation box and topology.
 
-    Implements methods for generating Atoms, visualizing the configuration, 
-    and writing data in various output file formats.
+    Implements methods for generating atoms, visualizing the configuration, 
+    and writing data in a standard output format.
 
     Parameters
     ----------
     box : Box
-        Simulation box object for the system.
+        Simulation box for the system
     """
     def __init__(self, box):
         self.box = box
@@ -194,7 +194,7 @@ class MolecularSystem:
     # File IO methods
     def write_lammps_data(self, fname = None, **kwargs):
         """
-        Writes the system structure and topology as a LAMMPS data file.
+        Write the system structure and topology as a LAMMPS data file.
         """
 
         # Keyword flags

@@ -13,8 +13,11 @@ from ..lib.utils import repair_molecules, save_path
 
 class DipoleTrajectory(MultiGroupAnalysis):
     """
-    Calculates the dipole and charge current trajectories for a series of atomgroups.
+    Calculate the dipole and charge current trajectories for a series of atomgroups.
     All residues within a group must contain the same number of particles.
+    The rotational dipole is calculated for each frame,
+    while the current is calculated only for frames with velocity data.
+    The translational dipole is only calculated if the ``nojump`` flag is specified.
 
     Parameters
     ----------
@@ -24,8 +27,6 @@ class DipoleTrajectory(MultiGroupAnalysis):
         list of residue types for each atom group in ("SP", "NM", "CM") (None)
     labels : list
         list of labels for each atom group (None)
-    current : bool
-        boolean flag for if trajectory has velocity data and current can be computed (False)
     nojump : bool
         boolean flag for if trajectory is unwrapped and translational dipole can be computed (False)
     repair : bool
@@ -37,7 +38,7 @@ class DipoleTrajectory(MultiGroupAnalysis):
         dictionary containing the calculated timeseries for each atom group
     """
 
-    def __init__(self, *args, restypes = None, labels = None, current = False, nojump = False, repair = False, **kwargs):
+    def __init__(self, *args, restypes = None, labels = None, nojump = False, repair = False, **kwargs):
         super().__init__([*args], **kwargs)
 
         # Group types of each AG
@@ -56,7 +57,6 @@ class DipoleTrajectory(MultiGroupAnalysis):
             labels = ["ag{}".format(i) for i in range(len(self._atomgroups))]
         self.labels = labels
 
-        self.current = current
         self.nojump= nojump
         self.repair = repair
 
@@ -70,20 +70,12 @@ class DipoleTrajectory(MultiGroupAnalysis):
         for i, ag in enumerate(self._atomgroups):
             label = self.labels[i]
             self.results[label + "_MD"] = np.zeros((self.nframes, 3))
-
-            if self.current:
-                self.results[label + "_J"] = np.zeros((self.nframes, 3))
-
-            if self.nojump:
-                self.results[label + "_MJ"] = np.zeros((self.nframes, 3))
+            self.results[label + "_MJ"] = np.zeros((self.nframes, 3))
+            self.results[label + "_J"] = np.zeros((self.nframes, 3))
 
     def _single_frame(self):
         # Add volume volume
         self.results["volume"][self._frame_index] = self._ts.volume
-
-        has_vel = self._ts.has_velocities
-        if self.current and not has_vel:
-            raise RuntimeError("Cannot compute current for timestep {:d} with no velocity data!".format(self._ts.frame))
 
         # Loop over each AG, gets a vector for P and J
         for i, ag in enumerate(self._atomgroups):
@@ -96,27 +88,21 @@ class DipoleTrajectory(MultiGroupAnalysis):
             label = self.labels[i]
             restype = self.restypes[i]
 
+            # Base-case is zeros
+            MD = np.zeros(3)
+            MJ = np.zeros(3)
+            J = np.zeros(3)
+
             if restype == "SP":
-                # Single particle
-                # No center-of-mass dipole, only translational/velocity current if charged
-                MD = np.zeros(3)
-
-                if self.current:
-                    J = np.dot(ag.charges, ag.velocities)
-
+                # Single particle, only current and translational dipole exists
                 if self.nojump:
                     MJ = np.dot(ag.charges, ag.positions)
+                if self._ts.has_velocities:
+                    J = np.dot(ag.charges, ag.velocities)
 
             elif restype == "NM":
-                # Neutral molecule
-                # No dipole/velocity current, only rotational dipole
+                # Neutral molecule, only rotational dipole is non-zero
                 MD = np.dot(ag.charges, ag.positions)
-
-                if self.current:
-                    J = np.zeros(3)
-
-                if self.nojump:
-                    MJ = np.zeros(3)
 
             else:
                 # Generic calculation for charged molecules
@@ -134,55 +120,37 @@ class DipoleTrajectory(MultiGroupAnalysis):
                 rcm = np.sum(ms[:, :, np.newaxis] * pos, axis = 1) / mtot
                 MD = np.sum(np.sum(qs[:, :, np.newaxis] * (pos - rcm[:, np.newaxis, :]), axis = 1), axis = 0)
 
-                if self.current:
+                if self.nojump:
+                   MJ = np.sum(qtot * rcm, axis = 0)
+
+                if self._ts.has_velocities:
                     vel = ag.velocities[idx]
                     vcm = np.sum(ms[:, :, np.newaxis] * vel, axis = 1) / mtot
                     J = np.sum(qtot * vcm, axis = 0)
-
-                if self.nojump:
-                   MJ = np.sum(qtot * rcm, axis = 0)
                  
             self.results[label + "_MD"][self._frame_index, :] = MD
-
-            if self.current:
-                self.results[label + "_J"][self._frame_index, :] = J
-
-            if self.nojump:
-                self.results[label + "_MJ"][self._frame_index, :] = MJ
+            self.results[label + "_MJ"][self._frame_index, :] = MJ
+            self.results[label + "_J"][self._frame_index, :] = J
 
     def _conclude(self):
         self.results["nframes"] = self._frame_index + 1
 
     def save(self, prefix = "", delimiter = " ", **kwargs):
-        self.output = save_path(prefix)
+        output = save_path(prefix)
         if self._verbose:
-            print("Saving results to files at location: {}".format(self.output))
+            print("Saving results to files at location: {}".format(output))
 
         # Create array and header depending on which items are present
-        header = ["time", "vol"]
+        header = ["time", "volume"]
         data = [self.results["time"], self.results["volume"]]
-        for i, label in enumerate(labels):
-            if self.current and self.nojump:
-                cols = ("MDX", "MDY", "MDZ", "MJX", "MJY", "MJZ", "JX", "JY", "JZ")
-                header.extend(["{}_{}".format(label, col) for col in cols])
 
-                data.append(self.results[label + "_MD"])
-                data.append(self.results[label + "_MJ"])
-                data.append(self.results[label + "_J"])
+        columns = ["MDX", "MDY", "MDZ", "MJX", "MJY", "MJZ", "JX", "JZ", "JY"]
+        for label in labels:
+            header.extend(["{}_{}".format(label, col) for col in colum])
 
-            elif self.current:
-                cols = ("MDX", "MDY", "MDZ", "JX", "JY", "JZ")
-                header.extend(["{}_{}".format(label, col) for col in cols])
-
-                data.append(self.results[label + "_MD"])
-                data.append(self.results[label + "_J"])
-
-            elif self.nojump:
-                cols = ("MDX", "MDY", "MDZ", "MJX", "MJY", "MJZ")
-                header.extend(["{}_{}".format(label, col) for col in cols])
-
-                data.append(self.results[label + "_MD"])
-                data.append(self.results[label + "_MJ"])
+            data.append(self.results[label + "_MD"])
+            data.append(self.results[label + "_MJ"])
+            data.append(self.results[label + "_J"])
 
         data = np.column_stack(data)
-        np.savetxt(self.output + "dipole_trajectory.dat", data, delimiter = delimiter, header = delimiter.join(header))
+        np.savetxt(output + "dipole_trajectory.dat", data, delimiter = delimiter, header = delimiter.join(header))

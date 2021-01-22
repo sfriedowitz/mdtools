@@ -8,7 +8,10 @@ from ..system.system import *
 #========================================================================================#
 
 def build_simple_electrolyte(ncat, nan, zcat, zan, L, fill_solvent = 0.0, fname = "init.data"):
-    # Quick check
+    """
+    Build a LAMMPS data file for a molecular system containing oppositely charged small ions
+    and optional neutral solvent.
+    """
     if zan > 0.0 or zcat < 0.0:
         raise ValueError("Monomer charges on +/- type are incorrect sign.")
 
@@ -39,6 +42,11 @@ def build_simple_electrolyte(ncat, nan, zcat, zan, L, fill_solvent = 0.0, fname 
     sys.write_lammps_data(fname = fname, bonds = True)
 
 def build_single_polyion(npol, nsalt, dp, zpol, L, fill_solvent = 0.0, bscale = 1.25, fname = "init.data"):
+    """
+    Build a LAMMPS data file for a molecular system containing a single polyelectrolyte species,
+    counterions, and optional added salt neutral solvent.
+    """
+
     # Create the monomers
     polmon = MonomerType(1, size = 1.0, charge = zpol)
     catmon = MonomerType(2, size = 1.0, charge = 1.0)
@@ -83,6 +91,11 @@ def build_single_polyion(npol, nsalt, dp, zpol, L, fill_solvent = 0.0, bscale = 
 
 
 def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_solvent = 0.0, bscale = 1.25, fname = "init.data"):
+    """
+    Build a LAMMPS data file for a molecular system containing oppositely charged polyelectrolytes,
+    optional counterions, optional added salt, and optional neutral solvent.
+    """
+
     # Quick check
     if za > 0.0 or zc < 0.0:
         raise ValueError("Monomer charges on A/C type are incorrect sign.")
@@ -144,6 +157,11 @@ def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_s
     sys.write_lammps_data(fname = fname, bonds = True)
 
 def build_diblock(npol, na, nb, za, zb, L, fill_solvent = 0.0, bscale = 1.25, fname = "init.data"):
+    """
+    Build a LAMMPS data file for a molecular system containing diblock copolymers
+    (with optional monomer charges) and optional neutral solvent.
+    """
+
     # Create the monomers
     amon = MonomerType(1, size = 1.0, charge = za)
     bmon = MonomerType(2, size = 1.0, charge = zb)

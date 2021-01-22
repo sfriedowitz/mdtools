@@ -8,7 +8,6 @@ class SerialAnalysis(AnalysisBase):
     Extension of the MDAnalysis `AnalysisBase` class 
     for defining multi frame analysis with serial iteration over the trajectory.
     """
-
     def __init__(self, trajectory, verbose = False, **kwargs):
         """
         Parameters
@@ -28,7 +27,9 @@ class SerialAnalysis(AnalysisBase):
         pass
 
 class SingleGroupAnalysis(SerialAnalysis):
-    """The base class for analysing a single AtomGroup only."""
+    """
+    The base class for analyzing a single AtomGroup only.
+    """
 
     _allow_multiple_atomgroups = False
 
@@ -38,7 +39,9 @@ class SingleGroupAnalysis(SerialAnalysis):
         self._universe = atomgroup.universe
 
 class MultiGroupAnalysis(SerialAnalysis):
-    """The base class for analysing a single or multiple AtomGroups."""
+    """
+    The base class for analyzing a single or multiple AtomGroups.
+    """
 
     _allow_multiple_atomgroups = True
 

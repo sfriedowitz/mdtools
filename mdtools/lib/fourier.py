@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# coding: utf-8
-
 import numpy as np
 
 #==============================================================================#
@@ -8,6 +5,9 @@ import numpy as np
 delta_tol = 1e-8  # Max variation from the mean dt or dk that is allowed (~1e-10 suggested)
 
 def kfft(t):
+    """
+    Return wave-vectors used in FFT computation for a given time signal.
+    """
     n = len(t)
     dt = (t[-1] - t[0]) / float(n - 1) 
     k = np.fft.fftshift(np.fft.fftfreq(n, d = dt) * 2 * np.pi)
@@ -15,7 +15,7 @@ def kfft(t):
 
 def fft_signal(t, x, indvar = True):
     """
-    Discrete fast fourier transform.
+    Discrete fast fourier transform of a provided time signal.
     Takes the time series and the function as arguments.
     By default, returns the FT and the frequency.
     Setting indvar = False returns only the FT values.
@@ -168,9 +168,8 @@ def sin_integrate(x, f, k = None, nk = None, indvar = True):
         will be used.
     nk : int
         number of ``k`` values to use if not provided, default to ``len(x)``
-    kzero: bool
-        whether to return ``k`` containing zero frequency component,
-        default to False
+    indvar : bool
+        whether to return ``k`` values along with integral result (True)
 
     Returns
     -------
@@ -204,9 +203,8 @@ def cos_integrate(x, f, k = None, nk = None, indvar = True):
         will be used.
     nk : int
         number of ``k`` values to use if not provided, default to ``len(x)``
-    kzero: bool
-        whether to return ``k`` containing zero frequency component,
-        default to False
+    indvar : bool
+        whether to return ``k`` values along with integral result (True)
 
     Returns
     -------
@@ -243,6 +241,8 @@ def fourier_integrate(x, f, k = None, nk = None, fft = True, indvar = True):
     fft: bool
         whether to use Filon's method via FFT, or sin/cos transforms.
         If True, ``k`` values are automatically generated.
+    indvar : bool
+        whether to return ``k`` values along with integral result (True)
 
     Returns
     -------

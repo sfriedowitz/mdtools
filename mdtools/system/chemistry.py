@@ -8,24 +8,23 @@ class MonomerType:
 
     Parameters
     ----------
-    id : integer
-        Unique ID for this monomer type.
-    mass : float (keyword)
-        Mass of this monomer.
-    charge : float (keyword)
-        Charge of this monomer.
-    size : float (keyword)
-        LJ diameter of this monomer (i.e. sigma).
-    **kwargs : (optional)
-        Extra keyword arguments to add to the monomer `attrib` dictionary.
+    id : int
+        Unique ID for this monomer type
+    mass : float 
+        Mass of the monomer (1.0)
+    charge : float
+        Charge of the monomer (0.0)
+    size : float
+        LJ diameter of this monomer (1.0)
+    name : string
+        Name for the type of monomer ("")
     """
-    def __init__(self, id, **kwargs):
+    def __init__(self, id, mass = 1.0, charge = 0.0, size = 1.0, name = ""):
         self.id     = id
-        self.name   = kwargs.get("name", "")
-        self.mass   = kwargs.get("mass", 1.0)
-        self.charge = kwargs.get("charge", 0.0)
-        self.size   = kwargs.get("size", 1.0)
-        self.properties = {}
+        self.mass   = mass
+        self.charge = charge
+        self.size   = size
+        self.name   = name
 
     def __repr__(self):
         return "MonomerType(id = {}, name = '{}')".format(self.id, self.name)
@@ -52,13 +51,13 @@ class Atom:
     Parameters
     ----------
     mon : MonomerType
-        Monomer type this atom represents.
-    mid : integer (keyword)
-        ID of molecule this Atom is a part of.
-    sid : integer (keyword)
-        ID of species this Atom is a part of.
+        Monomer type this atom represents
+    mid : int (keyword)
+        ID of molecule this atom is a part of (-1)
+    sid : int (keyword)
+        ID of species this atom is a part of (-1)
     """
-    def __init__(self, mon, mid = -1, sid = -1, **kwargs):
+    def __init__(self, mon, mid = -1, sid = -1):
         self.mon = mon
         self.id  = -1
         self.mid = mid
@@ -103,9 +102,9 @@ class TopologyGroup:
     Parameters
     ----------
     ids : integer (multiple)
-        A variable number of integer IDs stored in the TopologyGroup.
+        A variable number of integer IDs stored in the TopologyGroup
     type : integer (keyword)
-        Integer type ID for this group.
+        Integer type ID for this group
     """
     def __init__(self, *args, **kwargs):
         self.ids = tuple(args)

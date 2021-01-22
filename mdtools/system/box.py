@@ -15,10 +15,9 @@ class Box:
 
     Parameters
     ----------
-    lengths : array-like
-        Three lengths of box sides.
-    angles  : array-like
-        Three angles between box sides.
+    dims : array-like
+        A three- or three-component array containing three box lengths,
+        or three box lengths and three side angles
     """
     def __init__(self, dims):
         assert len(dims) == 3 or len(dims) == 6, "Invalid number of box dimensions"

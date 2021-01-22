@@ -48,7 +48,7 @@ def save_path(prefix = ""):
 
 def nearest_power_two(n):
     """
-    Select the closest i such that n<=2**i
+    Select the closest i such that n<=2**i.
     """
     current_exp = int(np.ceil(np.log2(n+1)))
     if n == 2**current_exp:
@@ -64,7 +64,7 @@ def zero_pad(x, n):
     """
     Pad an array to length `n` with zeros.
     If the original array length is greater than `n`,
-    a copy of the original array is returned.
+    a copy of the original array is returned with it's length unchanged.
     """
     nx = len(x)
     if n < nx:
@@ -77,7 +77,6 @@ def zero_pad(x, n):
 def bin_data(arr, nbins, after = 1, log = True):
     """
     Averages array values in bins for easier plotting.
-    Note: "bins" array should contain the INDEX (integer) where that bin begins
     """
     # Determine indices to average between
     if log:
