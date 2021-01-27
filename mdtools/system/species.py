@@ -88,7 +88,6 @@ class Multiblock(Species):
         self.bond_scale = kwargs.get("bond_scale", 1.25)
         self.bond_type = kwargs.get("bond_type", 1)
         self.wrap = kwargs.get("wrap", True)
-
         self.rinit = kwargs.get("rinit", None)
 
 
