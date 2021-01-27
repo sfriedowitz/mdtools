@@ -87,10 +87,10 @@ class Multiblock(Species):
 
         self.bond_scale = kwargs.get("bond_scale", 1.25)
         self.bond_type = kwargs.get("bond_type", 1)
+        self.wrap = kwargs.get("wrap", True)
 
-        # self.block_map = {}
-        # for blk_id, mon in enumerate(block_mons):
-        #     self.block_map[blk_id] = mon
+        self.rinit = kwargs.get("rinit", None)
+
 
     def charge(self):
         charge = 0.0
@@ -119,9 +119,14 @@ class Multiblock(Species):
     def generate(self, nmol, mid0, topology, box):
         mon0 = self.blk2mon(0)
         for mid in range(1, nmol+1):
-            # We place the first Atom randomly in the topology
             a0 = Atom(mon0, mid = mid0 + mid, sid = self.id)
-            a0.set_position(box.random_position())
+
+            # We place the first Atom randomly in box, unless a function is specified
+            if self.rinit is not None:
+                a0.set_position(self.rinit())
+            else:
+                a0.set_position(box.random_position())
+
             topology.add_atom(a0)
 
             aprev = a0
@@ -137,7 +142,9 @@ class Multiblock(Species):
                 delta = np.random.randn(3)
                 delta *= rbond / np.linalg.norm(delta)
                 ai.set_position(aprev.pos + delta)
-                box.wrap(ai.pos, ai.img)
+
+                if self.wrap:
+                    box.wrap(ai.pos, ai.img)
 
                 topology.add_atom_bonded_to(aprev.id, ai)
                 aprev = ai

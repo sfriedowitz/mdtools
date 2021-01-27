@@ -156,3 +156,6 @@ class MultiDampedOscillator(FittingFunction):
         for i in range(len(A)):
             fx += A[i]*np.cos(omega[i]*x + delta[i])*np.exp(-x/tau[i])
         return fx
+
+class MultiColeCole(FittingFunction):
+    pass
