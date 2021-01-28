@@ -31,7 +31,7 @@ class FittingFunction:
         assert self.is_fit, "Must perform fit before evaluation."
         return self._func(x, self.params)
     
-    def fit(self, x, fx, p0, nfit = None):
+    def fit(self, x, fx, p0, nfit = None, weight = False):
         """ 
         Fit the model to the provided data,
         using only the first ``nfit`` data points.
@@ -44,7 +44,15 @@ class FittingFunction:
         if nfit is None:
             nfit = len(x)
 
-        popt, pcov = curve_fit(lambda v, *p: self._func(v, p), x[:nfit], fx[:nfit], p0 = p0, bounds = (self.lb, self.ub))
+        xfit = x[:nfit]
+        ffit = fx[:nfit]
+
+        if weight:
+            sigma = np.sqrt(ffit**2).real
+        else:
+            sigma = np.ones(xfit.size)
+
+        popt, pcov = curve_fit(lambda v, *p: self._func(v, p), xfit, ffit, p0 = p0, bounds = (self.lb, self.ub), sigma = sigma)
         # Update fields
         self.xlim = (x[0], x[-1])
         self.is_fit = True
@@ -197,7 +205,7 @@ class MultiColeCole(FittingFunction):
         A, tau, beta = np.split(np.asarray(params), 3)
         fx = np.zeros(np.asarray(x).size, dtype = complex)
         for i in range(len(A)):
-            fx += A[i] / (1 + 1j*x*tau[i])**beta[i]
+            fx += A[i] / (1 + (1j*x*tau[i])**beta[i])
         return fx
 
     def _func_both(self, x, params):
@@ -208,17 +216,27 @@ class MultiColeCole(FittingFunction):
         both[n:] = fx.imag
         return both
 
-    def fit(self, x, fx, p0, nfit = None):
+    def fit(self, x, fx, p0, nfit = None, weight = True):
         assert len(p0) == self.nparams, "Invalid number of initial parameters. Requires: {:d}".format(self.nparams)
         assert len(x) == len(fx), "Number of x and y data points do not match."
         assert fx.dtype == complex, "Must provide complex-valued function data for model."
         
         if nfit is None:
             nfit = len(x)
-
-        xfit = np.concatenate((x[:nfit], x[:nfit]))
-        ffit = np.concatenate((fx[:nfit].real, fx[:nfit].imag))
-        popt, pcov = curve_fit(lambda v, *p: self._func_both(v, p), xfit, ffit, p0 = p0, bounds = (self.lb, self.ub))
+            
+        xfit = x[:nfit]
+        ffit = fx[:nfit] + np.min(fx[:nfit])
+        
+        xboth = np.concatenate((xfit, xfit))
+        fboth = np.concatenate((ffit.real, ffit.imag))
+        
+        if weight:
+            sigma = np.sqrt((fboth * np.conj(fboth))).real
+        else:
+            sigma = np.ones(xboth.size)
+        
+        popt, pcov = curve_fit(lambda v, *p: self._func_both(v, p), xboth, fboth, p0 = p0, 
+                               bounds = (self.lb, self.ub), sigma = sigma)
         
         # Update fields
         self.xlim = (x[0], x[-1])

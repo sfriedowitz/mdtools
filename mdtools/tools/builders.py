@@ -175,9 +175,11 @@ def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, counter = Fals
     mmon = MonomerType(4, size = 1.0, charge = -1.0)
 
     # Create the species
+    # Places randomly in a box centered at l0 with side lengths of l0/2
     def rinit(l0):
-        dims = np.array([l0, l0, l0])
-        return np.random.rand(3)*dims
+        center = np.array([l0/2, l0/2, l0/3])
+        scale = np.array([l0/3, l0/3, l0/4])
+        return center + scale*(2*np.random.rand(3) - 1)
 
     pa = Homopolymer(1, amon, dpa, bond_scale = bscale, rinit = lambda: rinit(lxy))
     pc = Homopolymer(2, cmon, dpc, bond_scale = bscale, rinit = lambda: rinit(lxy))
