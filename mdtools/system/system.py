@@ -227,7 +227,7 @@ class MolecularSystem:
             box_info = ("{0:<15.12f} {1:<15.12f} xlo xhi" "\n"
                         "{0:<15.12f} {2:<15.12f} ylo yhi" "\n"
                         "{0:<15.12f} {3:<15.12f} zlo zhi" "\n\n"
-                        ).format(0, *box.dims[:3])
+                        ).format(0, *box.dimensions[:3])
         else:
             # Must add the triclinic tilt factors to the file
             h = box.h

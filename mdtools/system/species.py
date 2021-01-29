@@ -21,17 +21,28 @@ class Species():
         All MonomerType objects present in species
     natoms : integer
         Number of atoms in a given unit of this species
+    initializer : function
+        A function of the form `func(box)` 
+        that returns an initial position for placing the species
     """
-    def __init__(self, id, monomers, natoms):
+    def __init__(self, id, monomers, natoms, **kwargs):
         self.id = id
         self.natoms = natoms
         self.monomers = monomers
+
+        self.initializer_ = kwargs.get("initializer", None)
 
     def generate_molecules(self, *args, **kwargs):
         """
         Add a given number of molecules of the species to a system topology.
         """
         pass
+
+    def initial_position(self, box):
+        if self.initializer_ is not None:
+            return self.initializer_(box)
+        else:
+            return box.random_position()
 
     def charge(self):
         """
@@ -50,7 +61,7 @@ class Point(Species):
     Species representing a single coarse-grained point-like object.
     """
     def __init__(self, id, mon, **kwargs):
-        super().__init__(id, [mon], 1)
+        super().__init__(id, [mon], 1, **kwargs)
 
     def charge(self):
         return self.monomers[0].charge
@@ -63,7 +74,7 @@ class Point(Species):
         for mid in range(1, nmol+1):
             # Atom ID is set when adding to the topology
             ai = Atom(mon, mid = mid0 + mid, sid = self.id)
-            ai.set_position(box.random_position())
+            ai.set_position(self.initial_position(box))
             topology.add_atom(ai)
 
 class Multiblock(Species):
@@ -76,7 +87,7 @@ class Multiblock(Species):
 
         mons = list(np.unique(block_mons))
         natoms = np.sum(block_lens)
-        super().__init__(id, mons, natoms)
+        super().__init__(id, mons, natoms, **kwargs)
 
         self.block_mons = block_mons
         self.block_lens = np.array(block_lens)
@@ -88,7 +99,6 @@ class Multiblock(Species):
         self.bond_scale = kwargs.get("bond_scale", 1.25)
         self.bond_type = kwargs.get("bond_type", 1)
         self.wrap = kwargs.get("wrap", True)
-        self.rinit = kwargs.get("rinit", None)
 
 
     def charge(self):
@@ -119,13 +129,7 @@ class Multiblock(Species):
         mon0 = self.blk2mon(0)
         for mid in range(1, nmol+1):
             a0 = Atom(mon0, mid = mid0 + mid, sid = self.id)
-
-            # We place the first Atom randomly in box, unless a function is specified
-            if self.rinit is not None:
-                a0.set_position(self.rinit())
-            else:
-                a0.set_position(box.random_position())
-
+            a0.set_position(self.initial_position(box))
             topology.add_atom(a0)
 
             aprev = a0

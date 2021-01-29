@@ -28,11 +28,15 @@ class Box:
         self.h = triclinic_vectors(dims)
         self.hinv = np.linalg.inv(self.h)
 
-        boxtype, box = check_box(self.dims)
+        boxtype, box = check_box(self.dimensions)
         self.boxtype = boxtype
 
     def __repr__(self):
-        return "Box(dims = [{:.3g}, {:.3g}, {:.3g}, {:.3g}, {:.3g}, {:.3g}])".format(*self.dims)
+        return "Box(dims = [{:.3g}, {:.3g}, {:.3g}, {:.3g}, {:.3g}, {:.3g}])".format(*self.dimensions)
+
+    @property
+    def dimensions(self):
+        return self.dims
 
     def is_orthogonal(self):
         return self.boxtype == "ortho"

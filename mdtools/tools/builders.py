@@ -90,7 +90,8 @@ def build_single_polyion(npol, nsalt, dp, zpol, L, fill_solvent = 0.0, bscale = 
     sys.write_lammps_data(fname = fname, bonds = True)
 
 
-def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_solvent = 0.0, bscale = 1.25, fname = "init.data"):
+def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_solvent = 0.0, 
+    center_scale = 1.0, bond_scale = 1.25, fname = "init.data"):
     """
     Build a LAMMPS data file for a molecular system containing oppositely charged polyelectrolytes,
     optional counterions, optional added salt, and optional neutral solvent.
@@ -107,10 +108,15 @@ def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_s
     mmon = MonomerType(4, size = 1.0, charge = -1.0)
 
     # Create the species
-    pa = Homopolymer(1, amon, dpa, bond_scale = bscale)
-    pc = Homopolymer(2, cmon, dpc, bond_scale = bscale)
-    cat = Point(3, pmon)
-    an = Point(4, mmon)
+    def rinit(box, scale):
+        center = box.dimensions[:3]/2.0
+        return center + scale*center*(2*np.random.rand(3) - 1)
+    rfunc = lambda b: rinit(b, center_scale)
+
+    pa = Homopolymer(1, amon, dpa, bond_scale = bond_scale, initializer = rfunc)
+    pc = Homopolymer(2, cmon, dpc, bond_scale = bond_scale, initializer = rfunc)
+    cat = Point(3, pmon, initializer = rfunc)
+    an = Point(4, mmon, initializer = rfunc)
 
     # Figure out the necessary charge balancing
     pa_charge = np.abs(na * pa.charge())
@@ -156,7 +162,7 @@ def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_s
     # Write the output data
     sys.write_lammps_data(fname = fname, bonds = True)
 
-def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, counter = False, bscale = 1.25, fname = "init.data"):
+def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, counter = False, bond_scale = 1.25, fname = "init.data"):
     """
     Build a LAMMPS data file for a molecular system containing oppositely charged polyelectrolytes,
     optional counterions, optional added salt, and optional neutral solvent.
@@ -176,13 +182,14 @@ def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, counter = Fals
 
     # Create the species
     # Places randomly in a box centered at l0 with side lengths of l0/2
-    def rinit(l0):
-        center = np.array([l0/2, l0/2, l0/2])
-        scale = np.array([l0/2, l0/2, l0/5])
+    def rinit(box):
+        center = box.dimensions[:3]/2
+        scale = center * np.array([0.5, 0.5, 0.1])
         return center + scale*(2*np.random.rand(3) - 1)
+    rfunc = lambda b: rinit(b)
 
-    pa = Homopolymer(1, amon, dpa, bond_scale = bscale, rinit = lambda: rinit(lxy))
-    pc = Homopolymer(2, cmon, dpc, bond_scale = bscale, rinit = lambda: rinit(lxy))
+    pa = Homopolymer(1, amon, dpa, bond_scale = bond_scale, initializer = rfunc)
+    pc = Homopolymer(2, cmon, dpc, bond_scale = bond_scale, initializer = rfunc)
     cat = Point(3, pmon)
     an = Point(4, mmon)
 
