@@ -41,11 +41,20 @@ class Box:
     def is_orthogonal(self):
         return self.boxtype == "ortho"
 
-    def random_position(self):
-        return np.dot(self.h, np.random.rand(3))
-
     def volume(self):
         return np.linalg.det(self.h)
+
+    def random_position(self):
+        return np.dot(np.random.rand(3), self.h)
+
+    def to_fractional(self, r):
+        return np.dot(r, self.hinv)
+
+    def to_real(self, f):
+        return np.dot(f, self.h)
+
+    def image_flag(self, r):
+        return np.floor(np.dot(r, self.hinv)).astype('int')
 
     def min_image(self, r):
         _min_image_triclinic(r, self.h, self.hinv)

@@ -115,10 +115,13 @@ def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_s
 
     pa = Homopolymer(1, amon, dpa, bond_scale = bond_scale, initializer = rfunc)
     pc = Homopolymer(2, cmon, dpc, bond_scale = bond_scale, initializer = rfunc)
-    cat = Point(3, pmon, initializer = rfunc)
-    an = Point(4, mmon, initializer = rfunc)
+    cat = Point(3, pmon)
+    an = Point(4, mmon)
 
-    # Figure out the necessary charge balancing
+    species = [pa, pc, cat, an]
+    counts = [na, nc, ns, ns]
+
+    # Figure out the necessary charge balancing, add separate counterion species if necessary
     pa_charge = np.abs(na * pa.charge())
     pc_charge = np.abs(nc * pc.charge())
 
@@ -128,19 +131,19 @@ def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_s
         raise ValueError("Polycation contains a fractional charge.")
 
     if counter:
-        ncat = ns + pa_charge
-        nan = ns + pc_charge
+        counter_cat = Point(5, pmon, initializer = rfunc)
+        counter_an = Point(6, mmon, initializer = rfunc)
+
+        species.extend([counter_cat, counter_an])
+        counts.extend([pa_charge, pc_charge])
     else:
         ngap = np.abs(pa_charge - pc_charge)
-        if pa_charge > pc_charge:
-            ncat = ns + ngap
-            nan = ns
-        elif pc_charge > pa_charge:
-            ncat = ns
-            nan = ns + ngap
-        else:
-            ncat = ns
-            nan = ns
+
+        counter_mon = pmon if pa_charge > pc_charge else mmon
+        counterion = Point(5, counter_mon, initializer = rfunc)
+
+        species.append(counterion)
+        counts.append(ngap)
 
     # Create the box, system, and add species
     box = Box([L, L, L])
@@ -162,7 +165,7 @@ def build_multi_polyion(na, nc, ns, dpa, dpc, za, zc, L, counter = False, fill_s
     # Write the output data
     sys.write_lammps_data(fname = fname, bonds = True)
 
-def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, counter = False, bond_scale = 1.25, fname = "init.data"):
+def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, zscale, counter = False, bond_scale = 1.25, fname = "init.data"):
     """
     Build a LAMMPS data file for a molecular system containing oppositely charged polyelectrolytes,
     optional counterions, optional added salt, and optional neutral solvent.
@@ -182,18 +185,21 @@ def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, counter = Fals
 
     # Create the species
     # Places randomly in a box centered at l0 with side lengths of l0/2
-    def rinit(box):
-        center = box.dimensions[:3]/2
-        scale = center * np.array([0.5, 0.5, 0.1])
+    def rinit(box, zscale):
+        center = 0.5*box.dimensions[:3]
+        scale = center * np.array([0.5, 0.5, 1.0/zscale])
         return center + scale*(2*np.random.rand(3) - 1)
-    rfunc = lambda b: rinit(b)
+    rfunc = lambda b: rinit(b, zscale)
 
     pa = Homopolymer(1, amon, dpa, bond_scale = bond_scale, initializer = rfunc)
     pc = Homopolymer(2, cmon, dpc, bond_scale = bond_scale, initializer = rfunc)
     cat = Point(3, pmon)
     an = Point(4, mmon)
 
-    # Figure out the necessary charge balancing
+    species = [pa, pc, cat, an]
+    counts = [na, nc, ns, ns]
+
+    # Figure out the necessary charge balancing, add separate counterion species if necessary
     pa_charge = np.abs(na * pa.charge())
     pc_charge = np.abs(nc * pc.charge())
 
@@ -203,26 +209,24 @@ def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, counter = Fals
         raise ValueError("Polycation contains a fractional charge.")
 
     if counter:
-        ncat = ns + pa_charge
-        nan = ns + pc_charge
+        counter_cat = Point(5, pmon, initializer = rfunc)
+        counter_an = Point(6, mmon, initializer = rfunc)
+
+        species.extend([counter_cat, counter_an])
+        counts.extend([pa_charge, pc_charge])
     else:
         ngap = np.abs(pa_charge - pc_charge)
-        if pa_charge > pc_charge:
-            ncat = ns + ngap
-            nan = ns
-        elif pc_charge > pa_charge:
-            ncat = ns
-            nan = ns + ngap
-        else:
-            ncat = ns
-            nan = ns
 
-    # Create the box, system, and add species
+        counter_mon = pmon if pa_charge > pc_charge else mmon
+        counterion = Point(5, counter_mon, initializer = rfunc)
+
+        species.append(counterion)
+        counts.append(ngap)
+
+    # Create the box and system
     box = Box([lxy, lxy, lz])
     sys = MolecularSystem(box)
 
-    species = [pa, pc, cat, an]
-    counts = [na, nc, ncat, nan]
     for i, sp in enumerate(species):
         nmol = counts[i]
         sys.add_species(sp, nmol = nmol)
