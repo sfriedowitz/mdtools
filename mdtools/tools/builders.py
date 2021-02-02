@@ -187,8 +187,8 @@ def build_coacervate_layer(na, nc, ns, dpa, dpc, za, zc, lxy, lz, zscale, counte
     # Places randomly in a box centered at l0 with side lengths of l0/2
     def rinit(box, zscale):
         center = 0.5*box.dimensions[:3]
-        scale = center * np.array([0.5, 0.5, 1.0/zscale])
-        return center + scale*(2*np.random.rand(3) - 1)
+        scale = np.array([0.9, 0.9, 1.0/zscale])
+        return center + scale*center*(2*np.random.rand(3) - 1)
     rfunc = lambda b: rinit(b, zscale)
 
     pa = Homopolymer(1, amon, dpa, bond_scale = bond_scale, initializer = rfunc)
