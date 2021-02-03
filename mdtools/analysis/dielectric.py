@@ -1,4 +1,5 @@
 import numpy as np
+from MDAnalysis.lib._cutil import make_whole
 
 # Module scripts
 from .base import SingleGroupAnalysis, MultiGroupAnalysis
@@ -54,7 +55,8 @@ class DielectricBulk(SingleGroupAnalysis):
     def _single_frame(self):
         ag = self._atomgroup
         if self.repair:
-            repair_molecules(ag)
+            for frag in ag.fragments:
+                make_whole(frag)
 
         self.volume += self._ts.volume
 
@@ -151,7 +153,6 @@ class DielectricSpectrumBulk(DipoleTrajectory):
         super().__init__(atomgroup, labels = ["ag1"], restypes = ["NM"], repair = repair, **kwargs)
 
         self.temperature = temperature
-        self.repair = repair
         self.segs = segs
 
         self.nbins = nbins

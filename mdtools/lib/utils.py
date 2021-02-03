@@ -90,36 +90,3 @@ def bin_data(arr, nbins, after = 1, log = True):
         avg[i] = np.mean(arr[bins[i]:bins[i+1]])
         
     return avg
-
-#==============================================================================#
-
-def repair_molecules(atomgroup):
-    """
-    Repair molecules that are broken due to peridodic boundaries.
-    To this end the center of mass is reset into the central box.
-    Caveat: Only works with small (< half box length) molecules.
-    """
-    # We repair each moleculetype individually for performance reasons
-    for seg in sel.segments:
-        apm = seg.atoms.n_atoms // seg.atoms.n_residues
-
-        # Make molecules whole, use first atom as reference
-        dist_to_first = np.empty((seg.atoms.positions.shape))
-        for i in range(apm):
-            dist_to_first[i::apm] = seg.atoms.positions[i::apm] - seg.atoms.positions[0::apm]
-
-        seg.atoms.positions -= (
-            np.abs(dist_to_first) > atomgroup.dimensions[:3] / 2.
-        ) * atomgroup.dimensions[:3] * np.sign(dist_to-first)
-
-        # Calculate the centers of the objects ( i.e. molecules )
-        mass_pos = (
-            seg.atoms.positions * seg.atoms.masses[:, np.newaxis]).reshape(
-                (seg.atoms.n_atoms // atpm, apm, 3)
-            )
-
-        # All molecules should have same mass
-        centers = np.sum(mass_pos.T, axis = 1).T / seg.atoms.masses[:apm].sum()
-
-        # now shift them back into the primary simulation cell
-        seg.atoms.positions += np.repeat((centers % atomgroup.dimensions[:3]) - centers, apm, axis = 0)

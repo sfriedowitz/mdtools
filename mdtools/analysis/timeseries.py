@@ -82,7 +82,8 @@ class DipoleTrajectory(MultiGroupAnalysis):
 
             # Repair if needed across boundaries, slow
             if self.repair:
-                repair_molecules(ag)
+                for frag in ag.fragments:
+                    make_whole(frag)
 
             # Determines which calculation method to use for each AG
             label = self.labels[i]

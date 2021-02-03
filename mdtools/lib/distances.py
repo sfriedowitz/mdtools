@@ -53,6 +53,25 @@ def _wrap_triclinic(r, h, hinv, img = None):
 
 #==============================================================================#
 
+def radius_of_gyration(pos):
+    """
+    Radius of gyration of a group of positions.
+    Does not account for periodic boundaries.
+    """
+    com = np.mean(pos, axis = 0)
+    delta = pos - com
+    rgv = np.sqrt(np.sum(delta**2, axis = 0) / len(pos))
+    return np.linalg.norm(rgv)
+
+def gyration_tensor(pos):
+    """
+    Gyration tensor for a group of positions.
+    Does not account for periodic boundaries.
+    """
+    com =  np.mean(pos, axis = 0)
+    delta = pos - com
+    return np.mean(np.einsum('bi,bo->bio', delta, delta), axis = 0)
+
 def separation_array(reference, configuration, box = None):
     """
     Calculate all possible separation vectors between a reference set and another
